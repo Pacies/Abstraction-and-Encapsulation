@@ -9,15 +9,14 @@ bool whileTrue = true;
 // Employee Class 
 class Employee {
 protected:
-    int id;
-    string name;
+    string id,name;
     double salary;
 
 public:
-    Employee(int id, string name, double salary) : id(id), name(name), salary(salary) {}
+    Employee(string id, string name, double salary) : id(id), name(name), salary(salary) {}
     virtual ~Employee() {}
 
-    int getId() const { 
+    string getId() const { 
         return id; 
     }
     virtual double calculateSalary() const = 0;
@@ -27,7 +26,7 @@ public:
 // Full-Time Employee Class
 class FullTimeEmployee : public Employee {
 public:
-    FullTimeEmployee(int id, string name, double salary) : Employee(id, name, salary) {}
+    FullTimeEmployee(string id, string name, double salary) : Employee(id, name, salary) {}
 
     double calculateSalary() const override{
         return salary; 
@@ -45,7 +44,7 @@ private:
     int hoursWorked;
 
 public:
-    PartTimeEmployee(int id, string name, double salary, int hoursWorked)
+    PartTimeEmployee(string id, string name, double salary, int hoursWorked)
         : Employee(id, name, salary), hoursWorked(hoursWorked) {}
 
     double calculateSalary() const override{
@@ -66,7 +65,7 @@ private:
     int projects;
 
 public:
-    ContractualEmployee(int id, string name, double salary, int projects)
+    ContractualEmployee(string id, string name, double salary, int projects)
         : Employee(id, name, salary), projects(projects) {}
 
     double calculateSalary() const override{
@@ -82,26 +81,26 @@ public:
 };
 
 // Function to Validate Integer Input (For IDs)
-int getValidatedID(const string& prompt) {
+string getValidatedID(const string& prompt) {
     string input;
-    regex validPattern("^[1-9]\\d*$"); // Only positive integers
+    regex validPattern("^[a-zA-Z0-9]+$"); // Accepts letters and numbers
 
     while (whileTrue) {
         cout << prompt;
         cin >> input;
 
         if (regex_match(input, validPattern)) {
-            return stoi(input); // Valid integer ID
+            return input; // Valid alphanumeric ID
         }
 
-        cout << "Invalid input. Please enter a valid positive integer for the ID." << endl;
+        cout << "Invalid input. ID must contain only letters and numbers (no spaces or symbols)." << endl;
         cin.clear();
         cin.ignore(10000, '\n');
     }
 }
 
 // Updated isDuplicateID Function
-bool isDuplicateID(const vector<Employee*>& employees, int id) {
+bool isDuplicateID(const vector<Employee*>& employees, string id) {
     for (Employee* emp : employees) {
         if (emp->getId() == id) {
             return true; 
@@ -139,7 +138,7 @@ int getValidatedChoice() {
     while (whileTrue) {
         cout << "Enter your choice: ";
         cin >> input;
-
+        
         bool valid = true;
         for (char c : input) {
             if (!isdigit(c)) {
@@ -174,7 +173,7 @@ int menuUI() {
 
 // Remove Employee Function
 void removeEmployee(vector<Employee*>& employees) {
-    int id;
+    string id;
     cout << "Enter Employee ID to remove: ";
     cin >> id;
 
@@ -189,6 +188,24 @@ void removeEmployee(vector<Employee*>& employees) {
     cout << "Employee not found." << endl;
 }
 
+// Checks Valid Name Input
+string getValidName() {
+    string name;
+    while (true) {
+        cout << "Enter Employee Name: ";
+        getline(cin, name);
+
+        // Trim spaces from start and end
+        name.erase(0, name.find_first_not_of(" \t"));
+        name.erase(name.find_last_not_of(" \t") + 1);
+
+        if (!name.empty()) {
+            return name;  // Valid name
+        }
+        cout << "Invalid input. Name cannot be empty or spaces. Try again.\n";
+    }
+}
+
 // Main Function
 int main() {
     vector<Employee*> employees;
@@ -197,20 +214,25 @@ int main() {
     do {
         choice = menuUI();
 
+        // Clear screen for all options except payroll report (option #4)
+        if (choice != 4) {
+            system("cls");
+        }
+
         if (choice == 1 || choice == 2 || choice == 3) {
-            int id;
+            string id;
             do {
-                id = getValidatedID("\nEnter Employee ID: ");
+                cout << "\nEnter Employee ID: ";
+                cin >> id;
+                cin.ignore(); // Clear newline left by cin
+
                 if (isDuplicateID(employees, id)) {
                     cout << "Duplicate ID! Please enter a unique ID." << endl;
                 }
+
             } while (isDuplicateID(employees, id));
 
-            cin.ignore();
-            string name;
-            cout << "Enter Employee Name: ";
-            getline(cin, name);
-
+            string name = getValidName();
             double salary = getValidatedDouble("Enter Salary: ");
 
             if (choice == 1) {
@@ -225,6 +247,7 @@ int main() {
 
             cout << "Employee added successfully!" << endl;
         }
+
         else if (choice == 4) {
             cout << "\n------ Employee Payroll Report ------" << endl;
             for (Employee* emp : employees) {
@@ -232,10 +255,15 @@ int main() {
             }
             cout << "Total Employees: " << employees.size() << endl;
             cout << "-------------------------------------" << endl;
+            cout << "Press Enter to return to menu...";
+            cin.ignore();
+            cin.get(); 
         }
+
         else if (choice == 5) {
             removeEmployee(employees);
         }
+
     } while (choice != 6);
 
     for (Employee* emp : employees) {
